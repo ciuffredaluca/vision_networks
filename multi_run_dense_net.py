@@ -119,8 +119,6 @@ if __name__ == "__main__":
                         default=0,\
                         help="Index of task within the job")
 
-    
-
     #### DenseNet flags
     parser.add_argument('--train', action='store_true',help='Train the model')
     parser.add_argument('--test', action='store_true',\
@@ -188,6 +186,9 @@ if __name__ == "__main__":
         FLAGS.reduction = 1.0
     elif FLAGS.model_type == 'DenseNet-BC':
         FLAGS.bc_mode = True
+
+    ps_hosts = FLAGS.ps_hosts.split(",")
+    worker_hosts = FLAGS.worker_hosts.split(",")
 
     #### put it on ps
     with tf.device(tf.train.replica_device_setter(ps_task=len(ps_hosts))):
