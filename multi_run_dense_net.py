@@ -54,47 +54,47 @@ def main(_):
         server.join()
     elif FLAGS.job_name == "worker":
 
-    # Assigns ops to the local worker by default.
+        # Assigns ops to the local worker by default.
         #### oss: here using only one gpu, need to change to use two
-    with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d/gpu:0" % \
+        with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d/gpu:0" % \
                                                   FLAGS.task_index,cluster=cluster)):
 
-        model_params = vars(TRAIN_FLAGS)
-        train_params = get_train_params_by_name(TRAIN_FLAGS.dataset)
-        print("Prepare training data...")
-        data_provider = get_data_provider_by_name(TRAIN_FLAGS.dataset, train_params)
-        print("Initialize the model..")
-        model = DenseNet(data_provider=data_provider, **model_params)
-        global_step = tf.contrib.framework.get_or_create_global_step()
+            model_params = vars(TRAIN_FLAGS)
+            train_params = get_train_params_by_name(TRAIN_FLAGS.dataset)
+            print("Prepare training data...")
+            data_provider = get_data_provider_by_name(TRAIN_FLAGS.dataset, train_params)
+            print("Initialize the model..")
+            model = DenseNet(data_provider=data_provider, **model_params)
+            global_step = tf.contrib.framework.get_or_create_global_step()
 
-        train_op = model.train_step
+            train_op = model.train_step
 
-    # The StopAtStepHook handles stopping after running given steps.
-    reduce_lr_epoch_1 = train_params['reduce_lr_epoch_1']
-    reduce_lr_epoch_2 = train_params['reduce_lr_epoch_2']
-    n_epochs = train_params['n_epochs']
+        # The StopAtStepHook handles stopping after running given steps.
+        reduce_lr_epoch_1 = train_params['reduce_lr_epoch_1']
+        reduce_lr_epoch_2 = train_params['reduce_lr_epoch_2']
+        n_epochs = train_params['n_epochs']
 
-    hooks=[tf.train.StopAtStepHook(last_step=n_epochs)]
+        hooks=[tf.train.StopAtStepHook(last_step=n_epochs)]
 
-    # The MonitoredTrainingSession takes care of session initialization,
-    # restoring from a checkpoint, saving to a checkpoint, and closing when done
-    # or an error occurs.
-    step_counter=0
-    with tf.train.MonitoredTrainingSession(master=server.target,is_chief=(FLAGS.task_index == 0),checkpoint_dir="/tmp/train_logs",hooks=hooks) as mon_sess:
-        while not mon_sess.should_stop():
-            if step_counter == reduce_lr_epoch_1 or step_counter == reduce_lr_epoch_2:
-                model.learning_rate = model.learning_rate / 10
-                print("Decrease learning rate, new lr = %f" % learning_rate)
-            # Run a training step asynchronously.
-            # See <a href="../api_docs/python/tf/train/SyncReplicasOptimizer"><code>tf.train.SyncReplicasOptimizer</code></a> for additional details on how to
-            # perform *synchronous* training.
-            # mon_sess.run handles AbortedError in case of preempted PS.
-            # if epoch == reduce_lr_epoch_1 or epoch == reduce_lr_epoch_2:
-            #     train_params['initial_learning_rate'] = train_params['initial_learning_rate'] / 10
-            mon_sess.run(train_op)
-            if step_counter%(n_epochs//10)==0:
-                model.save_model(mon_sess)
-            step_counter+=1
+        # The MonitoredTrainingSession takes care of session initialization,
+        # restoring from a checkpoint, saving to a checkpoint, and closing when done
+        # or an error occurs.
+        step_counter=0
+        with tf.train.MonitoredTrainingSession(master=server.target,is_chief=(FLAGS.task_index == 0),checkpoint_dir="/tmp/train_logs",hooks=hooks) as mon_sess:
+            while not mon_sess.should_stop():
+                if step_counter == reduce_lr_epoch_1 or step_counter == reduce_lr_epoch_2:
+                    model.learning_rate = model.learning_rate / 10
+                    print("Decrease learning rate, new lr = %f" % learning_rate)
+                    # Run a training step asynchronously.
+                    # See <a href="../api_docs/python/tf/train/SyncReplicasOptimizer"><code>tf.train.SyncReplicasOptimizer</code></a> for additional details on how to
+                    # perform *synchronous* training.
+                    # mon_sess.run handles AbortedError in case of preempted PS.
+                    # if epoch == reduce_lr_epoch_1 or epoch == reduce_lr_epoch_2:
+                    #     train_params['initial_learning_rate'] = train_params['initial_learning_rate'] / 10
+                mon_sess.run(train_op)
+                if step_counter%(n_epochs//10)==0:
+                    model.save_model(mon_sess)
+                step_counter+=1
 
 if __name__ == "__main__":
     
