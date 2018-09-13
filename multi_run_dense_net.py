@@ -56,7 +56,8 @@ def main(_):
 
     # Assigns ops to the local worker by default.
         #### oss: here using only one gpu, need to change to use two
-    with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d/gpu:0" % FLAGS.task_index,cluster=cluster)):
+    with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d/gpu:0" % \
+                                                  FLAGS.task_index,cluster=cluster)):
 
         model_params = vars(TRAIN_FLAGS)
         train_params = get_train_params_by_name(TRAIN_FLAGS.dataset)
