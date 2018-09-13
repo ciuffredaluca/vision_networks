@@ -191,7 +191,7 @@ if __name__ == "__main__":
     worker_hosts = FLAGS.worker_hosts.split(",")
 
     #### put it on ps
-    with tf.device(tf.train.replica_device_setter(ps_task=len(ps_hosts))):
+    with tf.device(tf.train.replica_device_setter(ps_tasks=len(ps_hosts))):
         
         model_params = vars(FLAGS)
 
