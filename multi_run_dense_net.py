@@ -174,7 +174,7 @@ if __name__ == "__main__":
     
     parser.set_defaults(renew_logs=True)
 
-    FLAGS = parser.parse_args()
+    FLAGS, unparsed = parser.parse_known_args()
 
     if not FLAGS.keep_prob:
         if FLAGS.dataset in ['C10', 'C100', 'SVHN']:
