@@ -3,7 +3,7 @@ import sys
 
 import tensorflow as tf
 
-from models.dense_net import DenseNet
+from models.multi_host_dense_net import DenseNet
 from data_providers.utils import get_data_provider_by_name
 
 FLAGS = None
