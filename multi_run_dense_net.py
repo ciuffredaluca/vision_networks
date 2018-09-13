@@ -59,10 +59,10 @@ def main(_):
         with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d/gpu:0" % \
                                                   FLAGS.task_index,cluster=cluster)):
 
-            model_params = vars(TRAIN_FLAGS)
-            train_params = get_train_params_by_name(TRAIN_FLAGS.dataset)
+            model_params = vars(FLAGS)
+            train_params = get_train_params_by_name(FLAGS.dataset)
             print("Prepare training data...")
-            data_provider = get_data_provider_by_name(TRAIN_FLAGS.dataset, train_params)
+            data_provider = get_data_provider_by_name(FLAGS.dataset, train_params)
             print("Initialize the model..")
             model = DenseNet(data_provider=data_provider, **model_params)
             global_step = tf.contrib.framework.get_or_create_global_step()
@@ -119,88 +119,87 @@ if __name__ == "__main__":
                         default=0,\
                         help="Index of task within the job")
 
-    FLAGS, unparsed = parser.parse_known_args()
+    
 
     #### DenseNet flags
-    train_parser = argparse.ArgumentParser()
-    train_parser.add_argument('--train', action='store_true',help='Train the model')
-    train_parser.add_argument('--test', action='store_true',\
+    parser.add_argument('--train', action='store_true',help='Train the model')
+    parser.add_argument('--test', action='store_true',\
                         help='Test model for required dataset if pretrained model exists.'
                         'If provided together with `--train` flag testing will be'
                         'performed right after training.')
-    train_parser.add_argument('--model_type', '-m',\
+    parser.add_argument('--model_type', '-m',\
                         type=str,\
                         choices=['DenseNet', 'DenseNet-BC'],\
                         default='DenseNet',\
                         help='What type of model to use')
-    train_parser.add_argument('--growth_rate',\
+    parser.add_argument('--growth_rate',\
                         '-k', type=int,\
                         choices=[12, 24, 40],\
                         default=12,\
                         help='Grows rate for every layer, '\
                         'choices were restricted to used in paper')
-    train_parser.add_argument('--depth', '-d', type=int,\
+    parser.add_argument('--depth', '-d', type=int,\
                         choices=[40, 100, 190, 250],default=40,\
                         help='Depth of whole network, restricted to paper choices')
-    train_parser.add_argument('--dataset', '-ds', type=str,\
+    parser.add_argument('--dataset', '-ds', type=str,\
                         choices=['C10', 'C10+', 'C100', 'C100+', 'SVHN'],\
                         default='C10',\
                         help='What dataset should be used')
-    train_parser.add_argument('--total_blocks', '-tb', type=int,\
+    parser.add_argument('--total_blocks', '-tb', type=int,\
                         default=3, metavar='',\
                         help='Total blocks of layers stack (default: %(default)s)')
-    train_parser.add_argument('--keep_prob', '-kp', type=float,\
+    parser.add_argument('--keep_prob', '-kp', type=float,\
                         metavar='',help="Keep probability for dropout.")
-    train_parser.add_argument('--weight_decay', '-wd', type=float,\
+    parser.add_argument('--weight_decay', '-wd', type=float,\
                         default=1e-4, metavar='',\
                         help='Weight decay for optimizer (default: %(default)s)')
-    train_parser.add_argument('--nesterov_momentum', '-nm',\
+    parser.add_argument('--nesterov_momentum', '-nm',\
                         type=float, default=0.9, metavar='',\
                         help='Nesterov momentum (default: %(default)s)')
-    train_parser.add_argument(
+    parser.add_argument(
         '--reduction', '-red', type=float, default=0.5, metavar='',
         help='reduction Theta at transition layer for DenseNets-BC models')
 
-    train_parser.add_argument('--logs', dest='should_save_logs', action='store_true',help='Write tensorflow logs')
-    train_parser.add_argument('--no-logs', dest='should_save_logs', action='store_false',help='Do not write tensorflow logs')
-    train_parser.set_defaults(should_save_logs=True)
+    parser.add_argument('--logs', dest='should_save_logs', action='store_true',help='Write tensorflow logs')
+    parser.add_argument('--no-logs', dest='should_save_logs', action='store_false',help='Do not write tensorflow logs')
+    parser.set_defaults(should_save_logs=True)
 
-    train_parser.add_argument('--saves', dest='should_save_model', action='store_true',help='Save model during training')
-    train_parser.add_argument('--no-saves', dest='should_save_model', action='store_false', help='Do not save model during training')
-    train_parser.set_defaults(should_save_model=True)
+    parser.add_argument('--saves', dest='should_save_model', action='store_true',help='Save model during training')
+    parser.add_argument('--no-saves', dest='should_save_model', action='store_false', help='Do not save model during training')
+    parser.set_defaults(should_save_model=True)
 
-    train_parser.add_argument('--renew-logs', dest='renew_logs', action='store_true',help='Erase previous logs for model if exists.')
+    parser.add_argument('--renew-logs', dest='renew_logs', action='store_true',help='Erase previous logs for model if exists.')
     parser.add_argument('--not-renew-logs', dest='renew_logs', action='store_false',help='Do not erase previous logs for model if exists.')
     
-    train_parser.add_argument('--num_inter_threads', '-inter', type=int, default=1, metavar='',help='number of inter threads for inference / test')
-    train_parser.add_argument('--num_intra_threads', '-intra', type=int, default=128, metavar='',help='number of intra threads for inference / test')
+    parser.add_argument('--num_inter_threads', '-inter', type=int, default=1, metavar='',help='number of inter threads for inference / test')
+    parser.add_argument('--num_intra_threads', '-intra', type=int, default=128, metavar='',help='number of intra threads for inference / test')
     
-    train_parser.set_defaults(renew_logs=True)
+    parser.set_defaults(renew_logs=True)
 
-    TRAIN_FLAGS = train_parser.parse_args()
+    FLAGS = parser.parse_args()
 
-    if not TRAIN_FLAGS.keep_prob:
-        if TRAIN_FLAGS.dataset in ['C10', 'C100', 'SVHN']:
-            TRAIN_FLAGS.keep_prob = 0.8
+    if not FLAGS.keep_prob:
+        if FLAGS.dataset in ['C10', 'C100', 'SVHN']:
+            FLAGS.keep_prob = 0.8
         else:
-            TRAIN_FLAGS.keep_prob = 1.0
-    if TRAIN_FLAGS.model_type == 'DenseNet':
-        TRAIN_FLAGS.bc_mode = False
-        TRAIN_FLAGS.reduction = 1.0
-    elif TRAIN_FLAGS.model_type == 'DenseNet-BC':
-        TRAIN_FLAGS.bc_mode = True
+            FLAGS.keep_prob = 1.0
+    if FLAGS.model_type == 'DenseNet':
+        FLAGS.bc_mode = False
+        FLAGS.reduction = 1.0
+    elif FLAGS.model_type == 'DenseNet-BC':
+        FLAGS.bc_mode = True
 
     #### put it on ps
     with tf.device(tf.train.replica_device_setter(ps_task=len(ps_hosts))):
         
-        model_params = vars(TRAIN_FLAGS)
+        model_params = vars(FLAGS)
 
-        if not TRAIN_FLAGS.train and not TRAIN_FLAGS.test:
+        if not FLAGS.train and not FLAGS.test:
             print("You should train or test your network. Please check params.")
             exit()
 
             # some default params dataset/architecture related
-        train_params = get_train_params_by_name(TRAIN_FLAGS.dataset)
+        train_params = get_train_params_by_name(FLAGS.dataset)
         print("Params:")
         for k, v in model_params.items():
             print("\t%s: %s" % (k, v))
