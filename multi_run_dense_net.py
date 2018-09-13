@@ -92,8 +92,8 @@ def main(_):
                     # if epoch == reduce_lr_epoch_1 or epoch == reduce_lr_epoch_2:
                     #     train_params['initial_learning_rate'] = train_params['initial_learning_rate'] / 10
                 mon_sess.run(train_op)
-                if step_counter%(n_epochs//10)==0:
-                    model.save_model(mon_sess)
+                #if step_counter%(n_epochs//10)==0:
+                 #   model.save_model(mon_sess)
                 step_counter+=1
 
 if __name__ == "__main__":
