@@ -80,7 +80,7 @@ def main(_):
         # restoring from a checkpoint, saving to a checkpoint, and closing when done
         # or an error occurs.
         step_counter=0
-        with tf.train.MonitoredTrainingSession(master=server.target,is_chief=(FLAGS.task_index == 0),checkpoint_dir="/tmp/train_logs",hooks=hooks) as mon_sess:
+        with tf.train.MonitoredTrainingSession(master=server.target,is_chief=(FLAGS.task_index == 0),checkpoint_dir="/tmp/train_logs",hooks=hooks,config=tf.ConfigProto(allow_soft_placement=True)) as mon_sess:
             while not mon_sess.should_stop():
                 if step_counter == reduce_lr_epoch_1 or step_counter == reduce_lr_epoch_2:
                     model.learning_rate = model.learning_rate / 10
